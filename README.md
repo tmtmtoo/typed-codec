@@ -1,2 +1,3 @@
-# typed-codec
-A type-safe encode/decode helper.
+# _typed-codec_
+
+A type-safe encode/decode extension.
