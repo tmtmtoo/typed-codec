@@ -4,6 +4,6 @@ A highly abstracted encode/decode extension.
 
 ## examples
 
-- [simple](/tests/base64.rs)
-- [crypto](/tests/crypto.rs)
-- [framing](/tests/framing.rs)
+- [simple](./tests/simple.rs)
+- [crypto](./tests/crypto.rs)
+- [framing](./tests/framing.rs)
