@@ -1,6 +1,6 @@
 # _typed-codec_
 
-A highly abstracted encode/decode extension.
+A highly abstracted encode/decode extension for any values.
 
 ## examples
 
