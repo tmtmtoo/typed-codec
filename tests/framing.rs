@@ -20,23 +20,23 @@ where
     }
 }
 
-impl<T> ContextualEncode<&u32, &mut T, Result<(), Box<dyn std::error::Error>>> for LengthHeaderCodec
+impl<T> ContextualEncode<&mut T, &u32, Result<(), Box<dyn std::error::Error>>> for LengthHeaderCodec
 where
     T: std::io::Write,
 {
-    fn encode(length: &u32, writer: &mut T) -> Result<(), Box<dyn std::error::Error>> {
+    fn encode(writer: &mut T, length: &u32) -> Result<(), Box<dyn std::error::Error>> {
         writer.write_all(&length.to_be_bytes()).map_err(Into::into)
     }
 }
 
 enum PayloadCodec {}
 
-impl<T> ContextualDecode<&u32, &mut T, Result<Vec<u8>, Box<dyn std::error::Error>>> for PayloadCodec
+impl<T> ContextualDecode<&mut T, &u32, Result<Vec<u8>, Box<dyn std::error::Error>>> for PayloadCodec
 where
     T: std::io::Read,
 {
-    fn decode(ctx: &u32, reader: &mut T) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-        let mut buf = vec![0; *ctx as usize];
+    fn decode(reader: &mut T, length: &u32) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        let mut buf = vec![0; *length as usize];
 
         reader.read_exact(&mut buf)?;
 
@@ -44,11 +44,11 @@ where
     }
 }
 
-impl<T> ContextualEncode<&Vec<u8>, &mut T, Result<(), Box<dyn std::error::Error>>> for PayloadCodec
+impl<T> ContextualEncode<&mut T, &Vec<u8>, Result<(), Box<dyn std::error::Error>>> for PayloadCodec
 where
     T: std::io::Write,
 {
-    fn encode(value: &Vec<u8>, writer: &mut T) -> Result<(), Box<dyn std::error::Error>> {
+    fn encode(writer: &mut T, value: &Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
         writer.write_all(&value).map_err(Into::into)
     }
 }
@@ -73,11 +73,11 @@ where
     }
 }
 
-impl<T> ContextualEncode<&Frame, &mut T, Result<(), Box<dyn std::error::Error>>> for FrameCodec
+impl<T> ContextualEncode<&mut T, &Frame, Result<(), Box<dyn std::error::Error>>> for FrameCodec
 where
     T: std::io::Write,
 {
-    fn encode(frame: &Frame, writer: &mut T) -> Result<(), Box<dyn std::error::Error>> {
+    fn encode(writer: &mut T, frame: &Frame) -> Result<(), Box<dyn std::error::Error>> {
         use std::convert::TryFrom;
 
         let length = u32::try_from(frame.payload.len())?;

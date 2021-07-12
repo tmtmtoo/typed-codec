@@ -2,16 +2,16 @@ pub trait Encode<IN, OUT> {
     fn encode(value: IN) -> OUT;
 }
 
-pub trait ContextualEncode<CTX, IN, OUT> {
-    fn encode(ctx: CTX, value: IN) -> OUT;
+pub trait ContextualEncode<IN, CTX, OUT> {
+    fn encode(value: IN, ctx: CTX) -> OUT;
 }
 
 pub trait Decode<IN, OUT> {
     fn decode(value: IN) -> OUT;
 }
 
-pub trait ContextualDecode<CTX, IN, OUT> {
-    fn decode(ctx: CTX, value: IN) -> OUT;
+pub trait ContextualDecode<IN, CTX, OUT> {
+    fn decode(value: IN, ctx: CTX) -> OUT;
 }
 
 pub trait EncodeExt<'a, OUT>: Sized {
@@ -43,26 +43,26 @@ impl<'a, T, OUT> EncodeExt<'a, OUT> for T {
 pub trait ContextualEncodeExt<'a, CTX, OUT>: Sized {
     fn contextual_encode<E>(&'a self, ctx: CTX) -> OUT
     where
-        E: ContextualEncode<CTX, &'a Self, OUT>;
+        E: ContextualEncode<&'a Self, CTX, OUT>;
 
     fn contextual_encode_mut<E>(&'a mut self, ctx: CTX) -> OUT
     where
-        E: ContextualEncode<CTX, &'a mut Self, OUT>;
+        E: ContextualEncode<&'a mut Self, CTX, OUT>;
 }
 
 impl<'a, T, CTX, OUT> ContextualEncodeExt<'a, CTX, OUT> for T {
     fn contextual_encode<E>(&'a self, ctx: CTX) -> OUT
     where
-        E: ContextualEncode<CTX, &'a Self, OUT>,
+        E: ContextualEncode<&'a Self, CTX, OUT>,
     {
-        E::encode(ctx, self)
+        E::encode(self, ctx)
     }
 
     fn contextual_encode_mut<E>(&'a mut self, ctx: CTX) -> OUT
     where
-        E: ContextualEncode<CTX, &'a mut Self, OUT>,
+        E: ContextualEncode<&'a mut Self, CTX, OUT>,
     {
-        E::encode(ctx, self)
+        E::encode(self, ctx)
     }
 }
 
@@ -95,25 +95,25 @@ impl<'a, T, OUT> DecodeExt<'a, OUT> for T {
 pub trait ContextualDecodeExt<'a, CTX, OUT>: Sized {
     fn contextual_decode<D>(&'a self, ctx: CTX) -> OUT
     where
-        D: ContextualDecode<CTX, &'a Self, OUT>;
+        D: ContextualDecode<&'a Self, CTX, OUT>;
 
     fn contextual_decode_mut<D>(&'a mut self, ctx: CTX) -> OUT
     where
-        D: ContextualDecode<CTX, &'a mut Self, OUT>;
+        D: ContextualDecode<&'a mut Self, CTX, OUT>;
 }
 
 impl<'a, T, CTX, OUT> ContextualDecodeExt<'a, CTX, OUT> for T {
     fn contextual_decode<D>(&'a self, ctx: CTX) -> OUT
     where
-        D: ContextualDecode<CTX, &'a Self, OUT>,
+        D: ContextualDecode<&'a Self, CTX, OUT>,
     {
-        D::decode(ctx, self)
+        D::decode(self, ctx)
     }
 
     fn contextual_decode_mut<D>(&'a mut self, ctx: CTX) -> OUT
     where
-        D: ContextualDecode<CTX, &'a mut Self, OUT>,
+        D: ContextualDecode<&'a mut Self, CTX, OUT>,
     {
-        D::decode(ctx, self)
+        D::decode(self, ctx)
     }
 }
