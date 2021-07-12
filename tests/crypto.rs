@@ -36,13 +36,38 @@ where
     }
 }
 
+#[test]
+fn encode() {
+    let key = vec![0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77];
+    let value = vec![0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
+
+    let actual = value.contextual_encode::<DesCrypto>(&key).unwrap();
+    let expected = vec![0xe4, 0x04, 0xf3, 0xdf, 0x18, 0xa4, 0x53, 0x1b];
+
+    assert_eq!(actual, expected);
+}
+
+#[test]
+fn decode() {
+    let key = vec![0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77];
+    let value = vec![0xe4, 0x04, 0xf3, 0xdf, 0x18, 0xa4, 0x53, 0x1b];
+
+    let actual = value.contextual_decode::<DesCrypto>(&key).unwrap();
+    let expected = vec![0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08];
+
+    assert_eq!(actual, expected);
+}
+
 #[quickcheck]
-fn equivalent_when_encode_and_then_decode(mut key: Vec<u8>, mut value: Vec<u8>) {
-    key.resize(8, 0);
-    value.resize(8, 0);
+fn equivalent_when_encode_and_then_decode(mut random_key: Vec<u8>, mut random_value: Vec<u8>) {
+    random_key.resize(8, 0);
+    random_value.resize(8, 0);
 
-    let encrypted = value.contextual_encode::<DesCrypto>(&key).unwrap();
-    let decrypted = encrypted.contextual_decode::<DesCrypto>(&key).unwrap();
+    let actual = random_value
+        .contextual_encode::<DesCrypto>(&random_key)
+        .unwrap()
+        .contextual_decode::<DesCrypto>(&random_key)
+        .unwrap();
 
-    assert_eq!(decrypted, value);
+    assert_eq!(actual, random_value);
 }

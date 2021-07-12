@@ -24,9 +24,28 @@ where
     }
 }
 
+#[test]
+fn encode() {
+    let actual = "foobarbaz12345".encode::<Base64Codec>();
+    let expected = "Zm9vYmFyYmF6MTIzNDU=".to_owned();
+
+    assert_eq!(actual, expected);
+}
+
+#[test]
+fn decode() {
+    let actual = "Zm9vYmFyYmF6MTIzNDU=".decode::<Base64Codec>().unwrap();
+    let expected = "foobarbaz12345".to_owned();
+
+    assert_eq!(actual, expected);
+}
+
 #[quickcheck]
-fn equivalent_when_encode_and_then_decode(value: String) {
-    let encoded = value.encode::<Base64Codec>();
-    let decoded = encoded.decode::<Base64Codec>().unwrap();
-    assert_eq!(decoded, value);
+fn equivalent_when_encode_and_then_decode(random_value: String) {
+    let actual = random_value
+        .encode::<Base64Codec>()
+        .decode::<Base64Codec>()
+        .unwrap();
+
+    assert_eq!(actual, random_value);
 }

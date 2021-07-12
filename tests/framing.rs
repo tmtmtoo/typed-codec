@@ -53,7 +53,7 @@ where
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct Frame {
     payload: Vec<u8>,
 }
@@ -86,6 +86,75 @@ where
 
         writer.write_all(&frame.payload).map_err(Into::into)
     }
+}
+
+#[test]
+fn encode_length_header() {
+    let mut buff = Vec::new();
+    let length = 0x1234u32;
+
+    buff.contextual_encode_mut::<LengthHeaderCodec>(&length)
+        .unwrap();
+
+    let expected = vec![0x00, 0x00, 0x12, 0x34];
+
+    assert_eq!(buff, expected);
+}
+
+#[test]
+fn decode_length_header() {
+    let mut bytes = std::io::Cursor::new(vec![0x00u8, 0x00, 0x12, 0x34]);
+
+    let actual = bytes.decode_mut::<LengthHeaderCodec>().unwrap();
+    let expected = 0x1234;
+
+    assert_eq!(actual, expected);
+}
+
+#[test]
+fn encode_payload() {
+    let mut buff = Vec::new();
+    let payload = vec![1, 2, 3, 4];
+
+    buff.contextual_encode_mut::<PayloadCodec>(&payload)
+        .unwrap();
+
+    assert_eq!(buff, payload)
+}
+
+#[test]
+fn decode_payload() {
+    let mut bytes = std::io::Cursor::new(vec![1, 2, 3, 4, 5]);
+
+    let actual = bytes.contextual_decode_mut::<PayloadCodec>(&4).unwrap();
+    let expected = vec![1, 2, 3, 4];
+
+    assert_eq!(actual, expected)
+}
+
+#[test]
+fn encode_frame() {
+    let mut buff = Vec::new();
+    let frame = Frame {
+        payload: vec![1, 2, 3, 4],
+    };
+
+    buff.contextual_encode_mut::<FrameCodec>(&frame).unwrap();
+    let expected = vec![0, 0, 0, 4, 1, 2, 3, 4];
+
+    assert_eq!(buff, expected);
+}
+
+#[test]
+fn decode_frame() {
+    let mut bytes = std::io::Cursor::new(vec![0, 0, 0, 4, 1, 2, 3, 4]);
+
+    let actual = bytes.decode_mut::<FrameCodec>().unwrap();
+    let expected = Frame {
+        payload: vec![1, 2, 3, 4],
+    };
+
+    assert_eq!(actual, expected);
 }
 
 #[quickcheck]
