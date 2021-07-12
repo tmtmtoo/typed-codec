@@ -5,11 +5,11 @@ use typed_codec::*;
 
 enum LengthHeaderCodec {}
 
-impl<T> Decode<&mut T, Result<u32, Box<dyn std::error::Error>>> for LengthHeaderCodec
+impl<R> Decode<&mut R, Result<u32, Box<dyn std::error::Error>>> for LengthHeaderCodec
 where
-    T: std::io::Read,
+    R: std::io::Read,
 {
-    fn decode(reader: &mut T) -> Result<u32, Box<dyn std::error::Error>> {
+    fn decode(reader: &mut R) -> Result<u32, Box<dyn std::error::Error>> {
         let mut buf = [0; 4];
 
         reader.read_exact(&mut buf)?;
@@ -20,23 +20,23 @@ where
     }
 }
 
-impl<T> ContextualEncode<&mut T, &u32, Result<(), Box<dyn std::error::Error>>> for LengthHeaderCodec
+impl<W> ContextualEncode<&mut W, u32, Result<(), Box<dyn std::error::Error>>> for LengthHeaderCodec
 where
-    T: std::io::Write,
+    W: std::io::Write,
 {
-    fn encode(writer: &mut T, length: &u32) -> Result<(), Box<dyn std::error::Error>> {
+    fn encode(writer: &mut W, length: u32) -> Result<(), Box<dyn std::error::Error>> {
         writer.write_all(&length.to_be_bytes()).map_err(Into::into)
     }
 }
 
 enum PayloadCodec {}
 
-impl<T> ContextualDecode<&mut T, &u32, Result<Vec<u8>, Box<dyn std::error::Error>>> for PayloadCodec
+impl<R> ContextualDecode<&mut R, u32, Result<Vec<u8>, Box<dyn std::error::Error>>> for PayloadCodec
 where
-    T: std::io::Read,
+    R: std::io::Read,
 {
-    fn decode(reader: &mut T, length: &u32) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-        let mut buf = vec![0; *length as usize];
+    fn decode(reader: &mut R, length: u32) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        let mut buf = vec![0; length as usize];
 
         reader.read_exact(&mut buf)?;
 
@@ -44,12 +44,13 @@ where
     }
 }
 
-impl<T> ContextualEncode<&mut T, &Vec<u8>, Result<(), Box<dyn std::error::Error>>> for PayloadCodec
+impl<W, V> ContextualEncode<&mut W, V, Result<(), Box<dyn std::error::Error>>> for PayloadCodec
 where
-    T: std::io::Write,
+    W: std::io::Write,
+    V: AsRef<[u8]>,
 {
-    fn encode(writer: &mut T, value: &Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
-        writer.write_all(&value).map_err(Into::into)
+    fn encode(writer: &mut W, value: V) -> Result<(), Box<dyn std::error::Error>> {
+        writer.write_all(value.as_ref()).map_err(Into::into)
     }
 }
 
@@ -60,24 +61,24 @@ struct Frame {
 
 enum FrameCodec {}
 
-impl<T> Decode<&mut T, Result<Frame, Box<dyn std::error::Error>>> for FrameCodec
+impl<R> Decode<&mut R, Result<Frame, Box<dyn std::error::Error>>> for FrameCodec
 where
-    T: std::io::Read,
+    R: std::io::Read,
 {
-    fn decode(reader: &mut T) -> Result<Frame, Box<dyn std::error::Error>> {
+    fn decode(reader: &mut R) -> Result<Frame, Box<dyn std::error::Error>> {
         let length = reader.decode_mut::<LengthHeaderCodec>()?;
 
-        let payload = reader.contextual_decode_mut::<PayloadCodec>(&length)?;
+        let payload = reader.contextual_decode_mut::<PayloadCodec>(length)?;
 
         Ok(Frame { payload })
     }
 }
 
-impl<T> ContextualEncode<&mut T, &Frame, Result<(), Box<dyn std::error::Error>>> for FrameCodec
+impl<W> ContextualEncode<&mut W, &Frame, Result<(), Box<dyn std::error::Error>>> for FrameCodec
 where
-    T: std::io::Write,
+    W: std::io::Write,
 {
-    fn encode(writer: &mut T, frame: &Frame) -> Result<(), Box<dyn std::error::Error>> {
+    fn encode(writer: &mut W, frame: &Frame) -> Result<(), Box<dyn std::error::Error>> {
         use std::convert::TryFrom;
 
         let length = u32::try_from(frame.payload.len())?;
@@ -93,7 +94,7 @@ fn encode_length_header() {
     let mut buff = Vec::new();
     let length = 0x1234u32;
 
-    buff.contextual_encode_mut::<LengthHeaderCodec>(&length)
+    buff.contextual_encode_mut::<LengthHeaderCodec>(length)
         .unwrap();
 
     let expected = vec![0x00, 0x00, 0x12, 0x34];
@@ -126,7 +127,7 @@ fn encode_payload() {
 fn decode_payload() {
     let mut bytes = std::io::Cursor::new(vec![1, 2, 3, 4, 5]);
 
-    let actual = bytes.contextual_decode_mut::<PayloadCodec>(&4).unwrap();
+    let actual = bytes.contextual_decode_mut::<PayloadCodec>(4).unwrap();
     let expected = vec![1, 2, 3, 4];
 
     assert_eq!(actual, expected)
