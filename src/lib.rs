@@ -1,3 +1,5 @@
+#![no_std]
+
 pub trait Encode<IN, OUT> {
     fn encode(value: IN) -> OUT;
 }
