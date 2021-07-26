@@ -1,5 +1,9 @@
 #![no_std]
 
+#[cfg(test)]
+#[macro_use]
+extern crate std;
+
 pub trait Encode<IN, OUT> {
     fn encode(value: IN) -> OUT;
 }
@@ -117,5 +121,94 @@ impl<'a, T, CTX, OUT> ContextualDecodeExt<'a, CTX, OUT> for T {
         D: ContextualDecode<&'a mut Self, CTX, OUT>,
     {
         D::decode(self, ctx)
+    }
+}
+
+#[cfg(test)]
+mod property_based_test {
+    use super::*;
+    use quickcheck_macros::quickcheck;
+    use std::vec::Vec;
+
+    enum Raw {}
+
+    impl<T> Encode<T, T> for Raw {
+        fn encode(value: T) -> T {
+            value
+        }
+    }
+
+    impl<T> ContextualEncode<T, (), T> for Raw {
+        fn encode(value: T, _: ()) -> T {
+            value
+        }
+    }
+
+    impl<T> Decode<T, T> for Raw {
+        fn decode(value: T) -> T {
+            value
+        }
+    }
+
+    impl<T> ContextualDecode<T, (), T> for Raw {
+        fn decode(value: T, _: ()) -> T {
+            value
+        }
+    }
+
+    #[quickcheck]
+    fn equivalent_when_encode(value: Vec<u8>) {
+        let actual = value.encode::<Raw>();
+        let expected = &value;
+        assert_eq!(actual, expected);
+    }
+
+    #[quickcheck]
+    fn equivalent_when_encode_mut(mut value: Vec<u8>) {
+        let expected = &mut value.clone();
+        let actual = value.encode_mut::<Raw>();
+        assert_eq!(actual, expected);
+    }
+
+    #[quickcheck]
+    fn equivalent_when_contextual_encode(value: Vec<u8>) {
+        let actual = value.contextual_encode::<Raw>(());
+        let expected = &value;
+        assert_eq!(actual, expected);
+    }
+
+    #[quickcheck]
+    fn equivalent_when_contextual_encode_mut(mut value: Vec<u8>) {
+        let expected = &mut value.clone();
+        let actual = value.contextual_encode_mut::<Raw>(());
+        assert_eq!(actual, expected);
+    }
+
+    #[quickcheck]
+    fn equivalent_when_decode(value: Vec<u8>) {
+        let actual = value.decode::<Raw>();
+        let expected = &value;
+        assert_eq!(actual, expected);
+    }
+
+    #[quickcheck]
+    fn equivalent_when_decode_mut(mut value: Vec<u8>) {
+        let expected = &mut value.clone();
+        let actual = value.decode_mut::<Raw>();
+        assert_eq!(actual, expected);
+    }
+
+    #[quickcheck]
+    fn equivalent_when_contextual_decode(value: Vec<u8>) {
+        let actual = value.contextual_decode::<Raw>(());
+        let expected = &value;
+        assert_eq!(actual, expected);
+    }
+
+    #[quickcheck]
+    fn equivalent_when_contextual_decode_mut(mut value: Vec<u8>) {
+        let expected = &mut value.clone();
+        let actual = value.contextual_decode_mut::<Raw>(());
+        assert_eq!(actual, expected);
     }
 }
