@@ -1,30 +1,44 @@
 #![no_std]
+#![deny(missing_docs)]
+
+//! A highly abstracted encode/decode extension for any values.
 
 #[cfg(test)]
 #[macro_use]
 extern crate std;
 
+/// Trait that provides the encoding of the value.
 pub trait Encode<IN, OUT> {
+    /// Methods to implement the encoding function
     fn encode(value: IN) -> OUT;
 }
 
+/// Trait that provides contextual encoding of value.
 pub trait ContextualEncode<IN, CTX, OUT> {
+    /// Methods to implement the contextual encoding function
     fn encode(value: IN, ctx: CTX) -> OUT;
 }
 
+/// Trait that provides the decoding of the value.
 pub trait Decode<IN, OUT> {
+    /// Methods to implement the decoding function
     fn decode(value: IN) -> OUT;
 }
 
+/// Trait that provides the contextual decoding of the value.
 pub trait ContextualDecode<IN, CTX, OUT> {
+    /// Methods to implement the contextual decoding function
     fn decode(value: IN, ctx: CTX) -> OUT;
 }
 
+/// Trait that provides the encode method for any value.
 pub trait EncodeExt<'a, OUT>: Sized {
+    /// Call this method if the value is immutable.
     fn encode<E>(&'a self) -> OUT
     where
         E: Encode<&'a Self, OUT>;
 
+    /// Call this method if the value is mutable.
     fn encode_mut<E>(&'a mut self) -> OUT
     where
         E: Encode<&'a mut Self, OUT>;
@@ -46,11 +60,14 @@ impl<'a, T, OUT> EncodeExt<'a, OUT> for T {
     }
 }
 
+/// Trait that provides the contextual encode method for any value.
 pub trait ContextualEncodeExt<'a, CTX, OUT>: Sized {
+    /// Call this method if the value is immutable.
     fn contextual_encode<E>(&'a self, ctx: CTX) -> OUT
     where
         E: ContextualEncode<&'a Self, CTX, OUT>;
 
+    /// Call this method if the value is mutable.
     fn contextual_encode_mut<E>(&'a mut self, ctx: CTX) -> OUT
     where
         E: ContextualEncode<&'a mut Self, CTX, OUT>;
@@ -72,11 +89,14 @@ impl<'a, T, CTX, OUT> ContextualEncodeExt<'a, CTX, OUT> for T {
     }
 }
 
+/// Trait that provides the decode method for any value.
 pub trait DecodeExt<'a, OUT>: Sized {
+    /// Call this method if the value is immutable.
     fn decode<D>(&'a self) -> OUT
     where
         D: Decode<&'a Self, OUT>;
 
+    /// Call this method if the value is mutable.
     fn decode_mut<D>(&'a mut self) -> OUT
     where
         D: Decode<&'a mut Self, OUT>;
@@ -98,11 +118,14 @@ impl<'a, T, OUT> DecodeExt<'a, OUT> for T {
     }
 }
 
+/// Trait that provides the contextual decode method for any value.
 pub trait ContextualDecodeExt<'a, CTX, OUT>: Sized {
+    /// Call this method if the value is immutable.
     fn contextual_decode<D>(&'a self, ctx: CTX) -> OUT
     where
         D: ContextualDecode<&'a Self, CTX, OUT>;
 
+    /// Call this method if the value is mutable.
     fn contextual_decode_mut<D>(&'a mut self, ctx: CTX) -> OUT
     where
         D: ContextualDecode<&'a mut Self, CTX, OUT>;
