@@ -1,0 +1,24 @@
+name: Test
+
+on: [push]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rust: [stable, beta, nightly]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Setup Rust
+        uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: ${{ matrix.rust }}
+
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Run tests
+        run: cargo test

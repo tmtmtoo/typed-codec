@@ -3,6 +3,12 @@ name = "typed-codec"
 version = "0.1.0"
 authors = ["tmtmtoo <tmtmt2209@gmail.com>"]
 edition = "2018"
+license = "MIT"
+description = "A highly abstracted encode/decode extension for any values."
+repository = "https://github.com/tmtmtoo/typed-codec"
+homepage = "https://github.com/tmtmtoo/typed-codec"
+readme = "README.md"
+keywords = ["codec", "encode", "decode", "no_std"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
